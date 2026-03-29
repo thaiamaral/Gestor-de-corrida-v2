@@ -344,7 +344,7 @@ const StatsScreen = () => {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="font-headline font-extrabold text-4xl tracking-tight mb-2">Desempenho</h1>
+          <h1 className="font-headline font-extrabold text-4xl tracking-tight mb-2">Estatística</h1>
           <p className="text-on-surface-variant font-medium">Acompanhando sua precisão ao longo do tempo.</p>
         </div>
         <div className="bg-surface-container-high p-1.5 rounded-full flex items-center self-start">
