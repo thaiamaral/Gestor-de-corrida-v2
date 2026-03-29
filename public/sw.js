@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-corrida-v1';
+const CACHE_NAME = 'gestao-corrida-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
