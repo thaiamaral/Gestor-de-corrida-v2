@@ -1,0 +1,23 @@
+{
+  "name": "Gestão de Corrida",
+  "short_name": "Corrida",
+  "description": "Gerenciamento de ganhos e despesas para motoristas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#3fff8b",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/car/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://picsum.photos/seed/car/512/512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
