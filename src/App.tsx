@@ -43,7 +43,7 @@ import {
 } from 'recharts';
 import { cn } from './lib/utils';
 import { MOCK_TRANSACTIONS, MOCK_GOALS, MOCK_STATS } from './constants';
-import { Transaction, Goal, DailyStat } from './types';
+import { Transaction, Goal, DailyStat, RideType } from './types';
 
 // --- Components ---
 
@@ -711,7 +711,7 @@ const FABMenu = ({
 }: { 
   isOpen: boolean, 
   onClose: () => void,
-  onTriggerAdd: (type: 'ride' | 'expense', category?: string) => void
+  onTriggerAdd: (type: 'ride' | 'expense', category?: string, rideType?: RideType) => void
 }) => {
   return (
     <AnimatePresence>
@@ -730,21 +730,32 @@ const FABMenu = ({
             className="w-full max-w-md mx-auto space-y-4 mb-24"
           >
             <div className="space-y-3">
-              <button 
-                onClick={() => { onTriggerAdd('ride'); onClose(); }}
-                className="w-full flex items-center justify-between p-5 bg-surface-container-high rounded-lg hover:bg-surface-container-highest transition-colors group"
-              >
-                <div className="flex items-center gap-4">
+              <div className="p-5 bg-surface-container-high rounded-lg">
+                <div className="flex items-center gap-4 mb-6">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Plus className="w-6 h-6 text-primary" />
+                    <Car className="w-6 h-6 text-primary" />
                   </div>
-                  <div className="text-left">
+                  <div>
                     <span className="block font-headline font-bold text-on-surface">Adicionar Corrida</span>
-                    <span className="text-xs text-on-surface-variant">Registrar novos ganhos manuais</span>
+                    <span className="text-xs text-on-surface-variant">Selecione a plataforma</span>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:translate-x-1 transition-transform" />
-              </button>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Uber', type: 'uber' as RideType },
+                    { label: '99', type: '99' as RideType },
+                    { label: 'Avulsa', type: 'avulsa' as RideType },
+                  ].map((item, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => { onTriggerAdd('ride', undefined, item.type); onClose(); }}
+                      className="flex flex-col items-center justify-center p-4 bg-surface-container-low rounded-lg hover:bg-surface-container-highest transition-colors border border-on-surface-variant/5"
+                    >
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="p-5 bg-surface-container-high rounded-lg">
                 <div className="flex items-center gap-4 mb-6">
@@ -794,23 +805,30 @@ const FABMenu = ({
 const AddTransactionModal = ({ 
   type, 
   category, 
+  rideType,
   onClose, 
   onSave 
 }: { 
   type: 'ride' | 'expense', 
   category?: string, 
+  rideType?: RideType,
   onClose: () => void, 
-  onSave: (amount: number) => void 
+  onSave: (amount: number, quantity?: number) => void 
 }) => {
   const [amount, setAmount] = useState('');
+  const [quantity, setQuantity] = useState('1');
 
   const handleSave = () => {
     const numAmount = parseFloat(amount.replace(',', '.'));
+    const numQuantity = parseInt(quantity);
+    
     if (!isNaN(numAmount) && numAmount > 0) {
-      onSave(type === 'expense' ? -numAmount : numAmount);
+      onSave(type === 'expense' ? -numAmount : numAmount, type === 'ride' ? numQuantity : undefined);
       onClose();
     }
   };
+
+  const isRideWithQuantity = type === 'ride' && (rideType === 'uber' || rideType === '99');
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-6 bg-background/80 backdrop-blur-md">
@@ -821,7 +839,9 @@ const AddTransactionModal = ({
       >
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-xl font-headline font-bold">
-            {type === 'ride' ? 'Nova Corrida' : `Gasto: ${category}`}
+            {type === 'ride' 
+              ? `Nova Corrida: ${rideType?.toUpperCase()}` 
+              : `Gasto: ${category}`}
           </h2>
           <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface">
             <X className="w-6 h-6" />
@@ -829,10 +849,25 @@ const AddTransactionModal = ({
         </div>
 
         <div className="space-y-6">
+          {isRideWithQuantity && (
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Quantas Corridas?</label>
+              <input 
+                type="number" 
+                inputMode="numeric"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full h-14 bg-surface-container-highest border-none rounded-2xl text-2xl font-headline font-bold text-center focus:ring-2 focus:ring-primary transition-all"
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Valor (R$)</label>
+            <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+              {isRideWithQuantity ? 'Valor Total (R$)' : 'Valor (R$)'}
+            </label>
             <input 
-              autoFocus
+              autoFocus={!isRideWithQuantity}
               type="text" 
               inputMode="decimal"
               value={amount}
@@ -957,7 +992,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : { daily: new Date().toDateString(), weekly: '', monthly: '' };
   });
 
-  const [addModal, setAddModal] = useState<{ type: 'ride' | 'expense', category?: string } | null>(null);
+  const [addModal, setAddModal] = useState<{ type: 'ride' | 'expense', category?: string, rideType?: RideType } | null>(null);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   // Persistence
@@ -994,15 +1029,21 @@ export default function App() {
     // Weekly and monthly could be added similarly
   }, [lastReset.daily]);
 
-  const handleSaveTransaction = (amount: number) => {
+  const handleSaveTransaction = (amount: number, quantity?: number) => {
     if (!addModal) return;
 
     const newTx: Transaction = {
       id: Math.random().toString(36).substr(2, 9),
-      title: addModal.type === 'ride' ? 'Nova Corrida' : addModal.category || 'Gasto',
-      subtitle: addModal.type === 'ride' ? 'Registrada manualmente' : 'Gasto manual',
+      title: addModal.type === 'ride' 
+        ? `Corrida ${addModal.rideType?.toUpperCase()}` 
+        : addModal.category || 'Gasto',
+      subtitle: addModal.type === 'ride' 
+        ? `${quantity || 1} corrida(s) registrada(s)` 
+        : 'Gasto manual',
       amount: amount,
       type: addModal.type,
+      rideType: addModal.rideType,
+      quantity: quantity,
       timestamp: new Date(),
       category: addModal.category,
     };
@@ -1086,13 +1127,14 @@ export default function App() {
       <FABMenu 
         isOpen={isFABOpen} 
         onClose={() => setIsFABOpen(false)} 
-        onTriggerAdd={(type, category) => setAddModal({ type, category })}
+        onTriggerAdd={(type, category, rideType) => setAddModal({ type, category, rideType })}
       />
 
       {addModal && (
         <AddTransactionModal 
           type={addModal.type}
           category={addModal.category}
+          rideType={addModal.rideType}
           onClose={() => setAddModal(null)}
           onSave={handleSaveTransaction}
         />

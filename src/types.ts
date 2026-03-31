@@ -1,4 +1,5 @@
 export type TransactionType = 'ride' | 'expense' | 'bonus';
+export type RideType = 'uber' | '99' | 'avulsa';
 
 export interface Transaction {
   id: string;
@@ -6,6 +7,8 @@ export interface Transaction {
   subtitle: string;
   amount: number;
   type: TransactionType;
+  rideType?: RideType;
+  quantity?: number;
   timestamp: Date;
   category?: string;
 }
